@@ -1,37 +1,61 @@
-import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-})
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-    try {
-        const { message, skillPrompt }: { message: string; skillPrompt?: string } = await request.json()
+    // Retrieve the API key from environment variables
+    const apiKey = process.env.OPENAI_API_KEY;
 
-        const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
-            messages: [
-                {
-                    role: 'system',
-                    content: skillPrompt || 'You are a helpful AI assistant.'
-                },
-                {
-                    role: 'user',
-                    content: message
-                }
-            ]
-        })
-
-        return NextResponse.json({
-            message: completion.choices[0].message.content
-        })
-    } catch (error) {
-        console.error('Chat error:', error)
+    if (!apiKey) {
+        console.warn('OPENAI_API_KEY is missing. Skipping API call.');
         return NextResponse.json(
-            { error: 'Error processing chat' },
+            { error: 'API key is missing. Please configure OPENAI_API_KEY.' },
             { status: 500 }
-        )
+        );
+    }
+
+    try {
+        // Parse the incoming request to get the message content
+        const { message } = await request.json();
+
+        if (!message) {
+            return NextResponse.json(
+                { error: 'Message content is required.' },
+                { status: 400 }
+            );
+        }
+
+        // Make the API request to OpenAI
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: [{ role: 'user', content: message }],
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenAI API Error:', errorData);
+            return NextResponse.json(
+                { error: 'Failed to fetch response from OpenAI API.' },
+                { status: response.status }
+            );
+        }
+
+        const data = await response.json();
+
+        // Return the response content
+        return NextResponse.json({
+            message: data.choices?.[0]?.message?.content || 'No response from AI.',
+        });
+    } catch (error) {
+        console.error('Error calling OpenAI API:', error);
+        return NextResponse.json(
+            { error: 'Internal server error.' },
+            { status: 500 }
+        );
     }
 }
-
