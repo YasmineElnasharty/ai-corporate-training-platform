@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Layout } from '@/components/layout';
 import { useStore } from '@/lib/store';
-import { Subcategory } from '@/types'; // Import the updated Subcategory type
+import { Subcategory } from '@/types';
 import {
     Users,
     UserCog,
@@ -17,6 +17,7 @@ import {
     UserCheck,
 } from 'lucide-react';
 
+// Subcategory List
 const subcategories: Subcategory[] = [
     { id: 'sales', name: 'Sales Associate', icon: Users, skills: [] },
     { id: 'manager', name: 'Store Manager', icon: UserCog, skills: [] },
@@ -33,20 +34,25 @@ export default function SubcategoriesPage() {
     const selectedCategory = useStore((state) => state.selectedCategory);
     const setSelectedSubcategory = useStore((state) => state.setSelectedSubcategory);
 
-    // Redirect to '/categories' if no category is selected
+    // Debugging: Log current state
+    console.log('Selected Category:', selectedCategory);
+
+    // Redirect if no category is selected
     useEffect(() => {
         if (!selectedCategory) {
+            console.warn('No category selected. Redirecting to /categories.');
             router.push('/categories');
         }
     }, [selectedCategory, router]);
 
-    // Handle subcategory selection
+    // Handle Subcategory Selection
     const handleSubcategorySelect = (subcategory: Subcategory) => {
-        setSelectedSubcategory(subcategory);
-        router.push(`/skills`);
+        console.log('Selected Subcategory:', subcategory);
+        setSelectedSubcategory(subcategory); // Set the selected subcategory in Zustand store
+        router.push('/skills'); // Navigate to the skills page
     };
 
-    // Render nothing until redirection is completed
+    // Render nothing if selectedCategory is invalid
     if (!selectedCategory) {
         return null;
     }

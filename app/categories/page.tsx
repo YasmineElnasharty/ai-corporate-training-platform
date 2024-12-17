@@ -36,10 +36,13 @@ export default function CategoriesPage() {
     const router = useRouter();
     const setSelectedCategory = useStore((state) => state.setSelectedCategory);
 
-    // Function to handle category selection
+    // Debugging: Check if the setSelectedCategory works
     const handleCategorySelect = (category: Category) => {
+        console.log('Selected Category:', category); // Debugging: Log selected category
         setSelectedCategory(category);
-        router.push(`/subcategories`);
+
+        // Navigate to the subcategories page
+        router.push('/subcategories');
     };
 
     return (

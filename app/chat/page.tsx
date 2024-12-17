@@ -23,7 +23,7 @@ export default function ChatPage() {
 
         addChatMessage({
             role: 'assistant',
-            content: selectedSkill.prompt,
+            content: selectedSkill.prompt || "Welcome to your AI Training!",
             timestamp: Date.now(),
         });
     }, [selectedSkill, addChatMessage]);
@@ -67,21 +67,24 @@ export default function ChatPage() {
 
     // Process recorded audio and get AI response
     const processAudio = async (audioBlob: Blob) => {
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-
         try {
+            // Handle missing API key or endpoints gracefully
+            if (!process.env.NEXT_PUBLIC_OPENAI_API_KEY) {
+                console.warn('API key is missing. Cannot process audio.');
+                alert('Feature temporarily unavailable. Please configure API access.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob);
+
             // Transcribe audio
             const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
+            if (!response.ok) throw new Error('Failed to transcribe audio.');
             const data = await response.json();
-            const userMessage = data.text;
+            const userMessage = data.text || 'Unable to process audio.';
 
-            // Add user message to chat
-            addChatMessage({
-                role: 'user',
-                content: userMessage,
-                timestamp: Date.now(),
-            });
+            addChatMessage({ role: 'user', content: userMessage, timestamp: Date.now() });
 
             // Fetch AI response
             const aiResponse = await fetch('/api/chat', {
@@ -89,27 +92,25 @@ export default function ChatPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMessage, skillPrompt: selectedSkill?.prompt }),
             });
+
+            if (!aiResponse.ok) throw new Error('Failed to get AI response.');
             const aiData = await aiResponse.json();
 
-            addChatMessage({
-                role: 'assistant',
-                content: aiData.message,
-                timestamp: Date.now(),
-            });
+            addChatMessage({ role: 'assistant', content: aiData.message, timestamp: Date.now() });
 
-            // Convert AI response to speech
+            // Optional: Play audio response
             const audioResponse = await fetch('/api/speech', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: aiData.message }),
             });
 
-            const audioBlob = await audioResponse.blob();
-            const audioUrl = URL.createObjectURL(audioBlob);
+            const audioBlobResponse = await audioResponse.blob();
+            const audioUrl = URL.createObjectURL(audioBlobResponse);
             new Audio(audioUrl).play();
         } catch (error) {
-            console.error('Error processing audio:', error);
-            alert('Error processing the audio. Please try again.');
+            console.error('Error processing audio or fetching response:', error);
+            alert('Feature temporarily unavailable. Please try again later.');
         }
     };
 
@@ -135,7 +136,7 @@ export default function ChatPage() {
                             />
                         </div>
                         <h2 className="text-2xl font-semibold text-green-800">
-                            {selectedSkill?.name} Training
+                            {selectedSkill?.name || "Skill Training"}
                         </h2>
                     </motion.div>
 
@@ -157,8 +158,8 @@ export default function ChatPage() {
                                 >
                                     <div
                                         className={`max-w-[80%] p-3 rounded-lg ${message.role === 'user'
-                                            ? 'bg-gradient-to-r from-green-400 to-green-600 text-white'
-                                            : 'bg-gray-100 text-green-800'
+                                                ? 'bg-gradient-to-r from-green-400 to-green-600 text-white'
+                                                : 'bg-gray-100 text-green-800'
                                             }`}
                                     >
                                         {message.content}
@@ -179,8 +180,8 @@ export default function ChatPage() {
                             size="lg"
                             onClick={isRecording ? stopRecording : startRecording}
                             className={`rounded-full w-20 h-20 ${isRecording
-                                ? 'bg-red-600 hover:bg-red-700'
-                                : 'bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700'
+                                    ? 'bg-red-600 hover:bg-red-700'
+                                    : 'bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700'
                                 }`}
                         >
                             {isRecording ? (
