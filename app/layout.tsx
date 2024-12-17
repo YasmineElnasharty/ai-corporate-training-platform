@@ -1,20 +1,8 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Image from "next/image";
-import "./globals.css";
-import Link from 'next/link';
+// app/layout.tsx
+import './globals.css';
+import React from 'react';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
+export const metadata = {
   title: "AI Corporate Training Platform",
   description: "Choose from AI-driven categories and tools.",
 };
@@ -26,22 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* Fixed Navbar */}
-        <header className="bg-white shadow-md fixed top-0 w-full z-50">
-          <div className="container mx-auto flex items-center justify-start py-4 px-6">
-            {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <Image src="/logo1.png" alt="Logo" width={120} height={40} priority />
-              <span className="ml-2 text-lg font-bold text-[#5aba47]">
-                AI Corporate Training Platform
-              </span>
-            </Link>
-          </div>
-        </header>
-
-        {/* Page Content with padding to prevent overlap */}
-        <main className="container mx-auto px-4">{children}</main>
+      <body className="antialiased bg-gradient-to-br from-green-50 to-white text-green-900">
+        {children}
       </body>
     </html>
   );
