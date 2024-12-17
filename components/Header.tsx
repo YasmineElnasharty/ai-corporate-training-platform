@@ -12,7 +12,7 @@ export default function Header() {
             <div className="container mx-auto flex items-center justify-between py-3 px-6">
                 {/* Logo */}
                 <Link href="/" className="flex items-center space-x-2">
-                    <Image src="/logo1.png" alt="Logo" width={120} height={40} priority />
+                    <Image src="/logo.svg" alt="Logo" width={120} height={40} priority />
                     <span className="ml-2 text-lg font-bold text-[#5aba47]">
                         AI Corporate Training Platform
                     </span>
