@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Layout } from '@/components/layout';
 import { useStore } from '@/lib/store';
+import { Subcategory } from '@/types'; // Import the updated Subcategory type
 import {
     Users,
     UserCog,
@@ -16,7 +17,7 @@ import {
     UserCheck,
 } from 'lucide-react';
 
-const subcategories = [
+const subcategories: Subcategory[] = [
     { id: 'sales', name: 'Sales Associate', icon: Users, skills: [] },
     { id: 'manager', name: 'Store Manager', icon: UserCog, skills: [] },
     { id: 'customer-service', name: 'Customer Service', icon: HeadSet, skills: [] },
@@ -39,7 +40,8 @@ export default function SubcategoriesPage() {
         }
     }, [selectedCategory, router]);
 
-    const handleSubcategorySelect = (subcategory: any) => {
+    // Handle subcategory selection
+    const handleSubcategorySelect = (subcategory: Subcategory) => {
         setSelectedSubcategory(subcategory);
         router.push(`/skills`);
     };
@@ -52,6 +54,7 @@ export default function SubcategoriesPage() {
     return (
         <Layout>
             <div className="container mx-auto px-4 py-8">
+                {/* Page Title */}
                 <motion.h1
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -60,6 +63,8 @@ export default function SubcategoriesPage() {
                 >
                     Choose a subcategory
                 </motion.h1>
+
+                {/* Subcategories Grid */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -67,7 +72,7 @@ export default function SubcategoriesPage() {
                     className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
                 >
                     {subcategories.map((subcategory, index) => {
-                        const Icon = subcategory.icon;
+                        const Icon = subcategory.icon as React.ComponentType<React.SVGProps<SVGSVGElement>>;
                         return (
                             <motion.button
                                 key={subcategory.id}
@@ -79,9 +84,12 @@ export default function SubcategoriesPage() {
                                 onClick={() => handleSubcategorySelect(subcategory)}
                                 className="flex flex-col items-center justify-center p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all"
                             >
+                                {/* Subcategory Icon */}
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mb-3">
                                     <Icon className="w-6 h-6 text-white" />
                                 </div>
+
+                                {/* Subcategory Name */}
                                 <span className="text-sm font-medium text-center text-green-800">
                                     {subcategory.name}
                                 </span>

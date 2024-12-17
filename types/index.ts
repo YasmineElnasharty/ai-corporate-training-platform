@@ -13,12 +13,13 @@ export interface Category {
 export interface Subcategory {
     id: string;
     name: string;
-    icon: string; // Assuming Subcategory icons are string paths
-    skills: Skill[]; // Array of skills
+    icon: ComponentType<any> | string; // Accept React components or string paths
+    skills: string[];
 }
 
 // Skill Interface
 export interface Skill {
+    icon: any;
     id: string;
     name: string;
     category: string;
