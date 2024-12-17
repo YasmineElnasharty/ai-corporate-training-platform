@@ -1,134 +1,123 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Layout } from '@/components/layout'
-import { useStore } from '@/lib/store'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Mic, MicOff } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Layout } from '@/components/layout';
+import { useStore } from '@/lib/store';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Mic, MicOff } from 'lucide-react';
 
 export default function ChatPage() {
-    const selectedSkill = useStore((state) => state.selectedSkill)
-    const chatHistory = useStore((state) => state.chatHistory)
-    const addChatMessage = useStore((state) => state.addChatMessage)
-    const [isRecording, setIsRecording] = useState(false)
-    const [transcript, setTranscript] = useState('')
-    const mediaRecorder = useRef<MediaRecorder | null>(null)
-    const chunks = useRef<Blob[]>([])
-    const chatContainerRef = useRef<HTMLDivElement>(null)
+    const selectedSkill = useStore((state) => state.selectedSkill);
+    const chatHistory = useStore((state) => state.chatHistory);
+    const addChatMessage = useStore((state) => state.addChatMessage);
+    const [isRecording, setIsRecording] = useState(false);
+    const mediaRecorder = useRef<MediaRecorder | null>(null);
+    const chunks = useRef<Blob[]>([]);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
 
+    // Initialize the chat with the selected skill's prompt
     useEffect(() => {
-        if (!selectedSkill) return
+        if (!selectedSkill) return;
 
-        // Initialize chat with the skill's prompt
         addChatMessage({
             role: 'assistant',
             content: selectedSkill.prompt,
-            timestamp: Date.now()
-        })
-    }, [selectedSkill, addChatMessage])
+            timestamp: Date.now(),
+        });
+    }, [selectedSkill, addChatMessage]);
 
+    // Scroll to the bottom when chat history updates
     useEffect(() => {
         if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
-    }, [chatHistory])
+    }, [chatHistory]);
 
+    // Start recording audio
     const startRecording = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            mediaRecorder.current = new MediaRecorder(stream)
-            chunks.current = []
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder.current = new MediaRecorder(stream);
+            chunks.current = [];
 
-            mediaRecorder.current.ondataavailable = (e) => {
-                chunks.current.push(e.data)
-            }
+            mediaRecorder.current.ondataavailable = (e) => chunks.current.push(e.data);
 
             mediaRecorder.current.onstop = async () => {
-                const audioBlob = new Blob(chunks.current, { type: 'audio/wav' })
-                await processAudio(audioBlob)
-            }
+                const audioBlob = new Blob(chunks.current, { type: 'audio/wav' });
+                await processAudio(audioBlob);
+            };
 
-            mediaRecorder.current.start()
-            setIsRecording(true)
+            mediaRecorder.current.start();
+            setIsRecording(true);
         } catch (error) {
-            console.error('Error accessing microphone:', error)
+            console.error('Error accessing microphone:', error);
+            alert('Failed to access the microphone.');
         }
-    }
+    };
 
+    // Stop recording audio
     const stopRecording = () => {
         if (mediaRecorder.current && isRecording) {
-            mediaRecorder.current.stop()
-            setIsRecording(false)
+            mediaRecorder.current.stop();
+            setIsRecording(false);
         }
-    }
+    };
 
+    // Process recorded audio and get AI response
     const processAudio = async (audioBlob: Blob) => {
-        const formData = new FormData()
-        formData.append('audio', audioBlob)
+        const formData = new FormData();
+        formData.append('audio', audioBlob);
 
         try {
-            const response = await fetch('/api/transcribe', {
-                method: 'POST',
-                body: formData
-            })
-
-            const data = await response.json()
-            setTranscript(data.text)
+            // Transcribe audio
+            const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
+            const data = await response.json();
+            const userMessage = data.text;
 
             // Add user message to chat
             addChatMessage({
                 role: 'user',
-                content: data.text,
-                timestamp: Date.now()
-            })
+                content: userMessage,
+                timestamp: Date.now(),
+            });
 
-            // Get AI response
+            // Fetch AI response
             const aiResponse = await fetch('/api/chat', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: data.text,
-                    skillPrompt: selectedSkill?.prompt
-                })
-            })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userMessage, skillPrompt: selectedSkill?.prompt }),
+            });
+            const aiData = await aiResponse.json();
 
-            const aiData = await aiResponse.json()
-
-            // Add AI response to chat
             addChatMessage({
                 role: 'assistant',
                 content: aiData.message,
-                timestamp: Date.now()
-            })
+                timestamp: Date.now(),
+            });
 
             // Convert AI response to speech
             const audioResponse = await fetch('/api/speech', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    text: aiData.message
-                })
-            })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: aiData.message }),
+            });
 
-            const audioBlob = await audioResponse.blob()
-            const audioUrl = URL.createObjectURL(audioBlob)
-            const audio = new Audio(audioUrl)
-            audio.play()
+            const audioBlob = await audioResponse.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            new Audio(audioUrl).play();
         } catch (error) {
-            console.error('Error processing audio:', error)
+            console.error('Error processing audio:', error);
+            alert('Error processing the audio. Please try again.');
         }
-    }
+    };
 
     return (
         <Layout>
             <div className="container mx-auto px-4 py-8 max-w-4xl">
                 <div className="space-y-8">
+                    {/* Avatar and Skill Title */}
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -150,6 +139,7 @@ export default function ChatPage() {
                         </h2>
                     </motion.div>
 
+                    {/* Chat History */}
                     <Card
                         className="bg-white shadow-lg rounded-xl p-4 h-[40vh] overflow-y-auto"
                         ref={chatContainerRef}
@@ -167,8 +157,8 @@ export default function ChatPage() {
                                 >
                                     <div
                                         className={`max-w-[80%] p-3 rounded-lg ${message.role === 'user'
-                                                ? 'bg-gradient-to-r from-green-400 to-green-600 text-white'
-                                                : 'bg-gray-100 text-green-800'
+                                            ? 'bg-gradient-to-r from-green-400 to-green-600 text-white'
+                                            : 'bg-gray-100 text-green-800'
                                             }`}
                                     >
                                         {message.content}
@@ -178,6 +168,7 @@ export default function ChatPage() {
                         </AnimatePresence>
                     </Card>
 
+                    {/* Record Button */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -188,8 +179,8 @@ export default function ChatPage() {
                             size="lg"
                             onClick={isRecording ? stopRecording : startRecording}
                             className={`rounded-full w-20 h-20 ${isRecording
-                                    ? 'bg-red-600 hover:bg-red-700'
-                                    : 'bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700'
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700'
                                 }`}
                         >
                             {isRecording ? (
@@ -202,5 +193,5 @@ export default function ChatPage() {
                 </div>
             </div>
         </Layout>
-    )
+    );
 }
