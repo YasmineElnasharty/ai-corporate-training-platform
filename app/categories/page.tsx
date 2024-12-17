@@ -6,7 +6,7 @@ import { useStore } from '@/lib/store';
 import { Category } from '@/types';
 import {
   Car, Building2, Diamond, Hotel, Store, 
-  Utensils, Truck, Heart, Landmark, Factory,
+  Utensils, Truck, Heart, Landmark, 
   ArrowLeft, Search
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -116,9 +116,9 @@ export default function CategoriesPage() {
             transition={{ delay: 0.3 }}
             className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed font-medium"
           >
-            Select your industry to access specialized 
+            Select your industry to access specialized
             <span className="text-green-500 font-semibold"> AI-powered training modules </span>
-            tailored to your sector's unique needs and challenges.
+            tailored to your sectors unique needs and challenges.
           </motion.p>
         </motion.div>
 

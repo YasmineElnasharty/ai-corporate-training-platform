@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mic, MicOff } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+
 import { useRouter } from 'next/navigation';
 import React from 'react';
 

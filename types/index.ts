@@ -7,6 +7,7 @@ export interface Category {
     name: string;
     icon: ComponentType<LucideProps> | string; // Allows both React components and string paths
     subcategories: Subcategory[]; // Link to Subcategory array
+    description: string
 }
 
 // Subcategory Interface
@@ -26,6 +27,8 @@ export interface Skill {
     subcategory: string;
     description: string;
     prompt: string;
+    duration:string,
+    difficulty:string
 }
 
 // User Details Interface

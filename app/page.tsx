@@ -17,7 +17,7 @@ export default function LandingPage() {
     {
       icon: Brain,
       title: "AI-Powered Learning Paths",
-      description: "Personalized learning journeys adapted to each employee's pace and style"
+      description: "Personalized learning journeys adapted to each employee&apos;s pace and style"
     },
     {
       icon: Target,
@@ -46,24 +46,6 @@ export default function LandingPage() {
     }
   ];
 
-  const NavButton = ({ children, href = "#", className = "" }) => (
-    <Link href={href}>
-      <motion.div
-        className={`relative px-6 py-2 rounded-full group ${className}`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <motion.div 
-          className="absolute inset-0 bg-green-500 opacity-10 rounded-full"
-          initial={{ scale: 0.8 }}
-          whileHover={{ scale: 1 }}
-        />
-        <span className="relative z-10 font-medium text-gray-700 group-hover:text-green-600">
-          {children}
-        </span>
-      </motion.div>
-    </Link>
-  );
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,14 +61,14 @@ export default function LandingPage() {
 
   const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
     ({ className, ...props }, ref) => (
-      <motion.input
+      <input
         ref={ref}
-        whileFocus={{ scale: 1.02 }}
-        className={`border-2 border-gray-200 p-3 rounded-lg w-full focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 ${className}`}
+        className={`border-2 border-gray-200 p-3 rounded-lg w-full focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 transform hover:scale-102 ${className}`}
         {...props}
       />
     )
   );
+  
   Input.displayName = 'Input';
   
 
@@ -170,7 +152,7 @@ export default function LandingPage() {
               className="relative"
             >
               <p className="text-xl md:text-2xl text-gray-600 leading-relaxed">
-                Elevate your team's potential with our{" "}
+              Elevate your team&apos;s potential with our{" "}
                 <span className="relative inline-block">
                   <span className="relative z-10">AI-powered</span>
                   <motion.span

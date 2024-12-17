@@ -109,15 +109,17 @@ export default function SkillsPage() {
     skill.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getDifficultyColor = (difficulty: string) => {
-    const colors = {
-      'Beginner': 'bg-green-100 text-green-700',
-      'Intermediate': 'bg-yellow-100 text-yellow-700',
-      'Advanced': 'bg-orange-100 text-orange-700',
-      'Expert': 'bg-red-100 text-red-700'
-    };
-    return colors[difficulty] || colors['Beginner'];
+  type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+
+const getDifficultyColor = (difficulty: string): string => {
+  const colors: Record<Difficulty, string> = {
+    'Beginner': 'bg-green-100 text-green-700',
+    'Intermediate': 'bg-yellow-100 text-yellow-700',
+    'Advanced': 'bg-orange-100 text-orange-700',
+    'Expert': 'bg-red-100 text-red-700'
   };
+  return colors[difficulty as Difficulty] || colors['Beginner'];
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
