@@ -1,8 +1,8 @@
-'use client'; // Mark this as a Client Component
+'use client';
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function Header() {
     const router = useRouter();
@@ -12,7 +12,15 @@ export default function Header() {
             <div className="container mx-auto flex items-center justify-between py-3 px-6">
                 {/* Logo */}
                 <Link href="/" className="flex items-center space-x-2">
-                    <Image src="/logo.svg" alt="Logo" width={120} height={40} priority />
+                    {/* Check if the logo.svg exists in the public folder */}
+                    <Image
+                        src="/logo.svg" // Make sure logo.svg is placed in /public
+                        alt="AI Corporate Training Logo"
+                        width={120}
+                        height={40}
+                        priority
+                        className="h-auto w-auto" // Ensures the image is responsive
+                    />
                     <span className="ml-2 text-lg font-bold text-[#5aba47]">
                         AI Corporate Training Platform
                     </span>
@@ -20,8 +28,9 @@ export default function Header() {
 
                 {/* Navigation Arrow */}
                 <button
-                    onClick={() => router.back()} // Add onClick handler here
-                    className="text-[#5aba47] hover:text-green-700 transition text-lg font-semibold"
+                    onClick={() => router.back()}
+                    aria-label="Go back to the previous page"
+                    className="text-[#5aba47] hover:text-green-700 transition duration-300 text-lg font-semibold focus:outline-none"
                 >
                     ← Back
                 </button>
