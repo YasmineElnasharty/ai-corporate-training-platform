@@ -1,33 +1,54 @@
-import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-})
+const apiKey = process.env.OPENAI_API_KEY;
 
-export async function POST(request: Request) {
-    try {
-        const { text }: { text: string } = await request.json()
-
-        const mp3 = await openai.audio.speech.create({
-            model: 'tts-1',
-            voice: 'nova',
-            input: text,
-        })
-
-        const buffer = Buffer.from(await mp3.arrayBuffer())
-
-        return new Response(buffer, {
-            headers: {
-                'Content-Type': 'audio/mpeg'
-            }
-        })
-    } catch (error) {
-        console.error('Speech synthesis error:', error)
-        return NextResponse.json(
-            { error: 'Error generating speech' },
-            { status: 500 }
-        )
-    }
+if (!apiKey) {
+    console.warn('OPENAI_API_KEY is missing. API functionality is disabled.');
 }
 
+let openai: OpenAI | null = null;
+
+// Safely initialize OpenAI only if API key exists
+if (apiKey) {
+    openai = new OpenAI({ apiKey });
+}
+
+export async function POST(request: Request) {
+    if (!openai) {
+        return NextResponse.json(
+            { error: 'API key is missing. Please configure OPENAI_API_KEY.' },
+            { status: 500 }
+        );
+    }
+
+    try {
+        const { text } = await request.json();
+
+        if (!text) {
+            return NextResponse.json(
+                { error: 'Text input is required.' },
+                { status: 400 }
+            );
+        }
+
+        // Generate speech using OpenAI's text-to-speech API
+        const response = await openai.audio.speech.create({
+            model: 'tts-1',
+            voice: 'alloy',
+            input: text,
+        });
+
+        return new NextResponse(response.body as any, {
+            headers: {
+                'Content-Type': 'audio/mpeg',
+            },
+        });
+    } catch (error) {
+        console.error('Speech generation error:', error);
+        return NextResponse.json(
+            { error: 'Failed to generate speech.' },
+            { status: 500 }
+        );
+    }
+}
