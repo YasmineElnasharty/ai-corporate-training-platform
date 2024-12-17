@@ -1,0 +1,12 @@
+# Set line endings for text files
+* text=auto
+
+# Explicitly enforce LF line endings for specific files
+*.tsx text eol=lf
+*.ts text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+
+# For Windows systems, ensure CRLF is used for certain file types
+*.bat text eol=crlf
+*.cmd text eol=crlf
