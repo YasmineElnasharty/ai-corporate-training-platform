@@ -39,7 +39,6 @@ export async function POST(request: Request) {
     const response = new Response(buffer, {
       headers: {
         'Content-Type': 'audio/mpeg',
-        'Content-Length': buffer.length.toString(),
       },
     });
     
