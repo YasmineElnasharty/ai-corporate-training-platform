@@ -4,7 +4,7 @@ import { writeFileSync, unlinkSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY || '', // Ensure fallback for missing API key
 });
 
 export async function POST(request: Request) {
@@ -23,8 +23,8 @@ export async function POST(request: Request) {
         const arrayBuffer = await audio.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Create a temporary directory
-        const tempDir = join(process.cwd(), 'tmp'); // Use a directory in the project root
+        // Ensure the tmp directory exists
+        const tempDir = join(process.cwd(), 'tmp'); // Cross-platform temp directory
         if (!existsSync(tempDir)) {
             mkdirSync(tempDir); // Create the directory if it doesn't exist
         }
@@ -33,21 +33,29 @@ export async function POST(request: Request) {
         const tempFilePath = join(tempDir, `audio-${Date.now()}.wav`);
         writeFileSync(tempFilePath, buffer);
 
+        // Transcribe the audio file using OpenAI
         const response = await openai.audio.transcriptions.create({
-            file: await import('fs').then((fs) =>
-                fs.createReadStream(tempFilePath)
-            ),
+            file: await import('fs').then((fs) => fs.createReadStream(tempFilePath)),
             model: 'whisper-1',
         });
 
         // Clean up the temporary file
         unlinkSync(tempFilePath);
 
+        // Return the transcription result
         return NextResponse.json({ text: response.text });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Transcription error:', error);
+
+        if (error instanceof Error) {
+            return NextResponse.json(
+                { error: error.message || 'Error processing audio' },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json(
-            { error: 'Error processing audio' },
+            { error: 'Unknown error occurred during transcription.' },
             { status: 500 }
         );
     }

@@ -269,10 +269,10 @@ export default function ChatPage() {
                     onClick={isRecording ? stopRecording : startRecording}
                     disabled={status === 'processing' || status === 'responding'}
                     className={`inline-flex items-center justify-center rounded-full text-lg font-semibold text-white transition-all duration-300 w-20 h-20 ${isRecording
-                        ? 'bg-red-600 hover:bg-red-700'
-                        : status === 'processing' || status === 'responding'
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : status === 'processing' || status === 'responding'
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700'
                         }`}
                 >
                     {isRecording ? (
