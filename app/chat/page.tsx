@@ -93,7 +93,7 @@ export default function ChatPage() {
         try {
             // If this is the initial state, the first click triggers the initial message
             if (status === 'initial') {
-                const initialMessage = "Pardon me, but you seem to be trusting the same sales line upon me again. It would be delightful if you convey what makes these new arrivals unique. Don't rush. Be creative.";
+                const initialMessage = "Hello There , Welcome to the world of corporate training . I will be your guide for today";
                 await speakMessage(initialMessage);
                 // After the initial message finishes, status becomes 'idle'.
                 // User can click again to start recording for real.
