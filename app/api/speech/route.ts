@@ -38,11 +38,13 @@ export async function POST(request: Request) {
     // Return the audio file as a response
     const response = new Response(buffer, {
       headers: {
-          'Content-Type': 'audio/mpeg',
-          'Content-Length': buffer.length.toString(),
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': buffer.length.toString(),
       },
-  });
-  
+    });
+    
+    return response;
+    
   } catch (error: unknown) {
     console.error('Speech synthesis error:', error);
 
