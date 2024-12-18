@@ -35,58 +35,7 @@ export default function ChatPage() {
         return () => clearInterval(interval);
     }, [assistantMessage]);
 
-    // Speak message returns a promise that resolves when audio finishes playing
-    const speakMessage = (message: string) => {
-        return new Promise<void>(async (resolve, reject) => {
-            try {
-                setStatus('responding');
-                const speechResponse = await fetch('/api/speech', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: message }),
-                });
-
-                if (!speechResponse.ok) throw new Error('Failed to synthesize speech.');
-
-                const audioBlobResponse = await speechResponse.blob();
-                const audioUrl = URL.createObjectURL(audioBlobResponse);
-                const audio = new Audio(audioUrl);
-
-                setAssistantMessage(message);
-
-                // Play video only when speaking
-                if (videoRef.current) {
-                    videoRef.current.currentTime = 0;
-                    videoRef.current.play().catch((err) => console.error('Video play failed:', err));
-                }
-
-                audio.onended = () => {
-                    setStatus('idle');
-                    // Pause video right after speech ends
-                    if (videoRef.current) {
-                        videoRef.current.pause();
-                        videoRef.current.currentTime = 0;
-                    }
-                    resolve();
-                };
-
-                audio.play().catch((err) => {
-                    console.error('Audio play failed:', err);
-                    // If audio can't play, pause video as well
-                    if (videoRef.current) {
-                        videoRef.current.pause();
-                        videoRef.current.currentTime = 0;
-                    }
-                    setStatus('idle');
-                    reject(err);
-                });
-            } catch (err) {
-                console.error(err);
-                setStatus('idle');
-                reject(err);
-            }
-        });
-    };
+  
 
     // Start recording audio or handle initial interaction
     const startRecording = async () => {
@@ -138,29 +87,107 @@ export default function ChatPage() {
         try {
             const formData = new FormData();
             formData.append('audio', audioBlob);
-            // Transcribe audio
-            const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
-            if (!response.ok) throw new Error('Failed to transcribe audio.');
+            
+            // Transcribe audio with error handling
+            const response = await fetch('/api/transcribe', { 
+                method: 'POST', 
+                body: formData 
+            });
+            if (!response.ok) {
+                throw new Error(`Transcription failed: ${response.statusText}`);
+            }
             const data = await response.json();
             const userMessage = data.text || 'Unable to process audio.';
-
-            // Fetch AI response
+    
+            // Fetch AI response with error handling
             setStatus('responding');
             const aiResponse = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMessage }),
             });
-            if (!aiResponse.ok) throw new Error('Failed to get AI response.');
+            if (!aiResponse.ok) {
+                throw new Error(`AI response failed: ${aiResponse.statusText}`);
+            }
             const aiData = await aiResponse.json();
-
+    
+            if (!aiData.message) {
+                throw new Error('No message in AI response');
+            }
+    
             // Speak and show the assistant response
-            await speakMessage(aiData.message);
+            try {
+                await speakMessage(aiData.message);
+            } catch (error) {
+                console.error('Speech synthesis failed:', error);
+                // Still show the text response even if speech fails
+                setAssistantMessage(aiData.message);
+                setStatus('idle');
+            }
         } catch (error) {
             console.error('Error processing audio or fetching response:', error);
-            alert('Feature temporarily unavailable. Please try again later.');
+            setAssistantMessage('I apologize, but I encountered an error. Please try again.');
             setStatus('idle');
         }
+    };
+    
+    // Modified speakMessage function with improved error handling
+    const speakMessage = async (message: string) => {
+        return new Promise<void>(async (resolve, reject) => {
+            try {
+                setStatus('responding');
+                const speechResponse = await fetch('/api/speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: message }),
+                });
+    
+                if (!speechResponse.ok) {
+                    throw new Error(`Speech synthesis failed: ${speechResponse.statusText}`);
+                }
+    
+                const audioBlobResponse = await speechResponse.blob();
+                const audioUrl = URL.createObjectURL(audioBlobResponse);
+                const audio = new Audio(audioUrl);
+    
+                setAssistantMessage(message);
+    
+                if (videoRef.current) {
+                    videoRef.current.currentTime = 0;
+                    videoRef.current.play().catch((err) => {
+                        console.warn('Video play failed:', err);
+                        // Continue even if video fails
+                    });
+                }
+    
+                audio.onended = () => {
+                    setStatus('idle');
+                    if (videoRef.current) {
+                        videoRef.current.pause();
+                        videoRef.current.currentTime = 0;
+                    }
+                    URL.revokeObjectURL(audioUrl); // Clean up the URL
+                    resolve();
+                };
+    
+                audio.onerror = (err) => {
+                    console.error('Audio play failed:', err);
+                    if (videoRef.current) {
+                        videoRef.current.pause();
+                        videoRef.current.currentTime = 0;
+                    }
+                    URL.revokeObjectURL(audioUrl); // Clean up the URL
+                    setStatus('idle');
+                    reject(err);
+                };
+    
+                await audio.play();
+            } catch (err) {
+                console.error('Speech synthesis error:', err);
+                setStatus('idle');
+                reject(err);
+            }
+        });
     };
 
     return (
