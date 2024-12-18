@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
 
-interface OpenAIResponse {
-    choices?: { message?: { content: string } }[];
-}
-
 export async function POST(request: Request) {
+    // Retrieve the API key from environment variables
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-        console.error('OPENAI_API_KEY is missing.');
+        console.warn('OPENAI_API_KEY is missing. Skipping API call.');
         return NextResponse.json(
             { error: 'API key is missing. Please configure OPENAI_API_KEY.' },
             { status: 500 }
@@ -16,7 +13,8 @@ export async function POST(request: Request) {
     }
 
     try {
-        const { message }: { message: string } = await request.json();
+        // Parse the incoming request to get the message content
+        const { message } = await request.json();
 
         if (!message) {
             return NextResponse.json(
@@ -25,6 +23,7 @@ export async function POST(request: Request) {
             );
         }
 
+        // Make the API request to OpenAI
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -37,8 +36,18 @@ export async function POST(request: Request) {
             }),
         });
 
-        const data: OpenAIResponse = await response.json();
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('OpenAI API Error:', errorData);
+            return NextResponse.json(
+                { error: 'Failed to fetch response from OpenAI API.' },
+                { status: response.status }
+            );
+        }
 
+        const data = await response.json();
+
+        // Return the response content
         return NextResponse.json({
             message: data.choices?.[0]?.message?.content || 'No response from AI.',
         });
