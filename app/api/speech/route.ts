@@ -1,66 +1,52 @@
+// app/api/speech/route.ts
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { writeFileSync, unlinkSync, createReadStream } from 'fs';
-import { join } from 'path';
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || '',
+  apiKey: process.env.OPENAI_API_KEY || '',
 });
 
 export async function POST(request: Request) {
-    const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.error('OPENAI_API_KEY is missing.');
+    return NextResponse.json(
+      { error: 'API key is missing. Please configure OPENAI_API_KEY.' },
+      { status: 500 }
+    );
+  }
 
-    if (!apiKey) {
-        console.error('OPENAI_API_KEY is missing.');
-        return NextResponse.json(
-            { error: 'API key is missing. Please configure OPENAI_API_KEY.' },
-            { status: 500 }
-        );
+  try {
+    // Parse JSON containing the text to convert to speech
+    const { text }: { text: string } = await request.json();
+    if (!text) {
+      return NextResponse.json(
+        { error: 'No text provided for speech synthesis.' },
+        { status: 400 }
+      );
     }
 
-    try {
-        // Parse form data and extract audio file
-        const formData = await request.formData();
-        const audio = formData.get('audio') as Blob;
+    // Use the OpenAI Audio Speech endpoint to generate an MP3 from the text
+    const response = await openai.audio.speech.create({
+      model: "tts-1",   // Use "tts-1" for low latency
+      voice: "nova",   // Choose one of the available voices: alloy, echo, fable, onyx, nova, shimmer
+      input: text
+    });
 
-        if (!audio) {
-            return NextResponse.json(
-                { error: 'No audio file provided.' },
-                { status: 400 }
-            );
-        }
+    // Convert the response (ArrayBuffer) to a Node.js Buffer
+    const buffer = Buffer.from(await response.arrayBuffer());
 
-        // Convert Blob to Buffer and save to temporary file
-        const arrayBuffer = await audio.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        const tempFilePath = join('/tmp', `audio-${Date.now()}.wav`);
-        writeFileSync(tempFilePath, buffer);
-
-        try {
-            // Send file to OpenAI for transcription
-            const response = await openai.audio.transcriptions.create({
-                file: createReadStream(tempFilePath),
-                model: 'whisper-1',
-            });
-
-            unlinkSync(tempFilePath); // Clean up temporary file
-
-            return NextResponse.json({ text: response.text });
-        } catch (apiError) {
-            unlinkSync(tempFilePath); // Ensure cleanup
-            console.error('OpenAI API Error:', apiError);
-
-            return NextResponse.json(
-                { error: 'Failed to process the audio transcription.' },
-                { status: 500 }
-            );
-        }
-    } catch (error) {
-        console.error('Error processing audio request:', error);
-        return NextResponse.json(
-            { error: 'Error processing the audio file.' },
-            { status: 500 }
-        );
-    }
+    // Return the MP3 audio as a binary response
+    return new Response(buffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+      },
+    });
+  } catch (error) {
+    console.error('Error processing speech synthesis request:', error);
+    return NextResponse.json(
+      { error: 'Failed to synthesize speech.' },
+      { status: 500 }
+    );
+  }
 }
