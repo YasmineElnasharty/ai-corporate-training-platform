@@ -24,25 +24,20 @@ export async function POST(request: Request) {
         }
 
         // Make the API request to OpenAI
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
-        
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'gpt-4o',  // Fixed model name
-                messages: [{ role: 'user', content: message }],
-                max_tokens: 4000, // Limit response size
-                temperature: 0.7
-            }),
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
+              model: 'gpt-4o',
+              messages: [{ role: 'user', content: message }],
+              max_tokens: 4000,
+              temperature: 0.7
+            })
+          });
+          
 
         if (!response.ok) {
             const errorData = await response.json();
